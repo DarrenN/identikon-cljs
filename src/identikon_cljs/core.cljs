@@ -45,10 +45,9 @@
 
 (defn create-hue-range [a b total]
   (let [mn (min a b)
-        mx (max a b)]
-    (if (< (- mx mn) total)
-      (range mn (+ mx (- total (- mx mn))) (/ (- (- total (- mx mn)) mn) 25))
-      (range mn mx (/ (- mx mn) 25)))))
+        mx (max a b)
+        d (- mx mn)]
+    (range mn mx (/ d total))))
 
 (defn create-hues [l total]
   (sort (mapv #(Math/floor (* 1.411 %)) l))) ;; convert 0-255 to 0-360
@@ -123,13 +122,12 @@ for all the circles and their radii"
     (doseq [x (map conj coords hues ints)]
       (let [int (last x)
             m (mod int 3)]
-        (log-str x)
         (cond
           (= 0 m) (make-circle-zero p (take 3 x) xoff roff cr)
           (= 1 m) (make-circle-one p (take 3 x) xoff roff cr)
           (= 2 m) (make-circle-two p (take 3 x) xoff roff cr))))))
 
-(defn make [id s]
+(defn ^:export make [id s]
   (let [paper (get-svg id)
         ints (convert-string s)
         mirror (create-mirror ints)

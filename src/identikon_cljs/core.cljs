@@ -1,7 +1,8 @@
 (ns identikon-cljs.core
   (:require
    [cljs-hash.goog :as gh]
-   [cljsjs.snapsvg]))
+   [cljsjs.snapsvg]
+   [cljsjs.svgjs]))
 
 (enable-console-print!)
 
@@ -16,6 +17,8 @@
 (defn log-str
   ([x]   (do (.log js/console (pr-str x)) x))
   ([m x] (do (log-str {:msg m :data x})   x)))
+
+(log-str "hi" js/SVG)
 
 (defn sha1 [str]
   (gh/sha1-hex str))
@@ -41,7 +44,14 @@
       to-ints))
 
 (defn get-svg [id]
-  (js/Snap id))
+  (let [d (.getElementById js/document id)
+        w (.getAttribute d "width")
+        h (.getAttribute d "height")
+        p (js/SVG id)]
+    (.spof p)
+    (.attr p "width" w)
+    (.attr p "height" h)
+    {:svg p :width w :height h}))
 
 (defn create-hue-range [a b total]
   (let [mn (min a b)
@@ -59,11 +69,10 @@
 (defn get-svg-attrs [p]
   "Extract a bunch of attributes from the SVG object and calculate the x,y positions
 for all the circles and their radii"
-  (let [attr (.attr p)
+  (let [{svg :svg rwidth :w rheight :h} p
+        attr (.attr svg)
         amt 5
         total (* amt amt)
-        rwidth (aget attr "width") ; original height of SVG
-        rheight (aget attr "height") ; original width of SVG
         width (- rwidth (* rwidth .1)) ; create a border offset within SVG
         height (- rheight (* rheight .1))
         xoffset (/ (* rwidth .1) 2) ; amount to offset the dots on x/y
@@ -88,44 +97,43 @@ for all the circles and their radii"
 (defn make-circle-zero [p triple xoff roff cr]
   "Large solid circle"
   (let [[x y hue] triple
-        c (.circle p
-                   (- (+ xoff x) cr)
-                   (- (+ xoff y) cr)
-                   (- cr roff))
+        c (.circle p (- cr roff))
         hue (js/Snap.hsl hue 80 50)]
-    (.attr c (clj->js {:fill hue}))))
+    (.attr c (clj->js {:cx (- (+ xoff x) cr)
+                       :cy (- (+ xoff y) cr)
+                       :fill hue}))))
 
 (defn make-circle-one [p triple xoff roff cr]
   "Ring"
   (let [[x y hue] triple
-        c (.circle p
-                   (- (+ xoff x) cr)
-                   (- (+ xoff y) cr)
-                   (- (- cr (/ cr 4)) roff))
+        c (.circle p (- (- cr (/ cr 4)) roff))
         hue (js/Snap.hsl hue 80 50)]
-    (.attr c (clj->js {:fill "#ffffff" :stroke hue :strokeWidth (/ cr 2)}))))
+    (log-str #js [p c])
+    (.attr c (clj->js {:cx (- (+ xoff x) cr)
+                       :cy (- (+ xoff y) cr)
+                       :fill hue}))))
 
 (defn make-circle-two [p triple xoff roff cr]
   "Small solid circle"
   (let [[x y hue] triple
-        c (.circle p
-                   (- (+ xoff x) cr)
-                   (- (+ xoff y) cr)
-                   (- (- cr (/ cr 3)) roff))
+        c (.circle p (- (- cr (/ cr 3)) roff))
         hue (js/Snap.hsl hue 80 50)]
-    (.attr c (clj->js {:fill hue}))))
+    (.attr c (clj->js {:cx (- (+ xoff x) cr)
+                       :cy (- (+ xoff y) cr)
+                       :fill hue}))))
 
 (defn make-identikon [p ints hues]
   "Determine which circle to show by converting the int to mod 3"
   (let [svg (get-svg-attrs p)
+        {paper :svg} p
         {coords :coords xoff :xoffset roff :roffset cr :cr} svg]
     (doseq [x (map conj coords hues ints)]
       (let [int (last x)
             m (mod int 3)]
         (cond
-          (= 0 m) (make-circle-zero p (take 3 x) xoff roff cr)
-          (= 1 m) (make-circle-one p (take 3 x) xoff roff cr)
-          (= 2 m) (make-circle-two p (take 3 x) xoff roff cr))))))
+          (= 0 m) (make-circle-zero paper (take 3 x) xoff roff cr)
+          (= 1 m) (make-circle-one paper (take 3 x) xoff roff cr)
+          (= 2 m) (make-circle-two paper (take 3 x) xoff roff cr))))))
 
 (defn ^:export make [id s]
   (let [paper (get-svg id)

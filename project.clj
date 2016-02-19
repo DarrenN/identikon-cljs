@@ -12,7 +12,8 @@
                   :exclusions [org.clojure/tools.reader]]
                  [cljs-hash "0.0.2"]
                  [thi.ng/color "1.0.1"]
-                 [cljsjs/snapsvg "0.4.1-0"]]
+                 [cljsjs/snapsvg "0.4.1-0"]
+                 [cljsjs/svgjs "2.2.5-0"]]
 
   :plugins [[lein-figwheel "0.5.0-6"]
             [lein-cljsbuild "1.1.2" :exclusions [[org.clojure/clojure]]]]

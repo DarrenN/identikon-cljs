@@ -1,2 +1,9 @@
 /* some style */
+html {
+  font-family: "Helvetica Neue", helvetica, sans-serif;
+  color: #333;
+}
 
+body {
+  padding: 20px;
+}

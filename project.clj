@@ -1,6 +1,6 @@
-(defproject identikon-cljs "0.1.0-SNAPSHOT"
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
+(defproject identikon-cljs "0.2.0"
+  :description "Generate and inject dot-style Identikons into an HTML element as SVG"
+  :url "http://darrennewton.com/2015/01/04/deterministic-pixels/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
@@ -11,7 +11,6 @@
                  [org.clojure/core.async "0.2.374"
                   :exclusions [org.clojure/tools.reader]]
                  [cljs-hash "0.0.2"]
-                 [cljsjs/svgjs "2.2.5-0"]
                  [hiccups "0.3.0"]
                  [thi.ng/color "1.0.1"]]
 

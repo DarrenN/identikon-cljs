@@ -2,7 +2,6 @@
   (:require-macros [hiccups.core :as hiccups :refer [html]])
   (:require
    [cljs-hash.goog :as gh]
-   [cljsjs.svgjs]
    [hiccups.runtime :as hiccupsrt]
    [thi.ng.color.core :as col]))
 
@@ -138,7 +137,7 @@
 (defn insert-svg [svg el]
   (set! (.-innerHTML el) svg))
 
-(defn make-identikon [dimensions]
+(defn make-identikon-svg [dimensions]
   "Determine which circle to show by converting the int to mod 3"
   (let [svg (get-svg-attrs dimensions)
         {w :width, h :height, hues :hues, ints :mirror} dimensions
@@ -147,12 +146,12 @@
         dots (map (partial generate-circle xoff roff cr) dot-attrs)]
     (make-svg w h dots)))
 
-(defn ^:export make [el width height s]
+(defn ^:export make-identikon [el width height s]
   (let [ints (convert-string s)
         mirror (create-mirror ints)
         [hue-start hue-end] (find-hues ints)
         hues (create-hues (create-hue-range hue-start hue-end 25) 25)
-        idk (make-identikon {:mirror mirror, :hues hues, :width width,
+        idk (make-identikon-svg {:mirror mirror, :hues hues, :width width,
                              :height height})]
     (doseq [el (prim-seq (.querySelectorAll js/document el))]
       (insert-svg idk el))))

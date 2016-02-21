@@ -12,7 +12,6 @@
                   :exclusions [org.clojure/tools.reader]]
                  [cljs-hash "0.0.2"]
                  [thi.ng/color "1.0.1"]
-                 [cljsjs/snapsvg "0.4.1-0"]
                  [cljsjs/svgjs "2.2.5-0"]]
 
   :plugins [[lein-figwheel "0.5.0-6"]
@@ -27,7 +26,7 @@
                 :source-paths ["src"]
 
                 ;; If no code is to be run, set :figwheel true for continued automagical reloading
-                :figwheel {:on-jsload "identikon-cljs.core/on-js-reload"}
+                :figwheel true
 
                 :compiler {:main identikon-cljs.core
                            :asset-path "js/compiled/out"

@@ -7,11 +7,20 @@
   </head>
   <body>
     <div id="app">
-      <h2>Figwheel template</h2>
+      <h2>identikon-cljs</h2>
       <p>Checkout your developer console.</p>
-      <svg id="idk0" height="200" width="200" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
-      <svg id="idk1" height="200" width="200" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
-      <svg id="idk2" height="200" width="200" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
+      <pre>
+> identikon_cljs.core.make_identikon("#idk0", 300, 300, "identikon")
+> identikon_cljs.core.make_identikon("p.idkp", 60, 60, "small identikons")
+      </pre>
+      <div id="idk0"></div>
+      <div id="idk1" style="width: 100px; height: 100px"></div>
+      <div>
+        <p class="idkp">Foo</p>
+        <p class="idkp">Bar</p>
+        <p class="idkp">Baz</p>
+        <p class="idkp">Quux</p>
+      </div>
     </div>
     <script src="js/compiled/identikon_cljs.js" type="text/javascript"></script>
   </body>

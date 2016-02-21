@@ -1,6 +1,6 @@
-(defproject identikon-cljs "0.1.0-SNAPSHOT"
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
+(defproject identikon-cljs "0.2.0"
+  :description "Generate and inject dot-style Identikons into an HTML element as SVG"
+  :url "http://darrennewton.com/2015/01/04/deterministic-pixels/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
@@ -11,8 +11,8 @@
                  [org.clojure/core.async "0.2.374"
                   :exclusions [org.clojure/tools.reader]]
                  [cljs-hash "0.0.2"]
-                 [thi.ng/color "1.0.1"]
-                 [cljsjs/snapsvg "0.4.1-0"]]
+                 [hiccups "0.3.0"]
+                 [thi.ng/color "1.0.1"]]
 
   :plugins [[lein-figwheel "0.5.0-6"]
             [lein-cljsbuild "1.1.2" :exclusions [[org.clojure/clojure]]]]
@@ -26,7 +26,7 @@
                 :source-paths ["src"]
 
                 ;; If no code is to be run, set :figwheel true for continued automagical reloading
-                :figwheel {:on-jsload "identikon-cljs.core/on-js-reload"}
+                :figwheel true
 
                 :compiler {:main identikon-cljs.core
                            :asset-path "js/compiled/out"

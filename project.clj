@@ -11,8 +11,9 @@
                  [org.clojure/core.async "0.2.374"
                   :exclusions [org.clojure/tools.reader]]
                  [cljs-hash "0.0.2"]
-                 [thi.ng/color "1.0.1"]
-                 [cljsjs/svgjs "2.2.5-0"]]
+                 [cljsjs/svgjs "2.2.5-0"]
+                 [hiccups "0.3.0"]
+                 [thi.ng/color "1.0.1"]]
 
   :plugins [[lein-figwheel "0.5.0-6"]
             [lein-cljsbuild "1.1.2" :exclusions [[org.clojure/clojure]]]]

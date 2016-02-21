@@ -1,14 +1,22 @@
 (ns identikon-cljs.core
+  (:require-macros [hiccups.core :as hiccups :refer [html]])
   (:require
    [cljs-hash.goog :as gh]
-   [thi.ng.color.core :as col]
-   [cljsjs.svgjs]))
+   [cljsjs.svgjs]
+   [hiccups.runtime :as hiccupsrt]
+   [thi.ng.color.core :as col]))
 
 (enable-console-print!)
+
+(def counter (atom 0))
 
 (defn log-str
   ([x]   (do (.log js/console (pr-str x)) x))
   ([m x] (do (log-str {:msg m :data x})   x)))
+
+(defn make-id [nm]
+  (let [n (swap! counter inc)]
+    (str nm (str n))))
 
 (defn sha1 [str]
   (gh/sha1-hex str))
@@ -33,17 +41,6 @@
       to-pairs
       to-ints))
 
-(defn get-svg [id]
-  "SVG.js converts an SVG to 100% x 100% on grabbing the DOM element so we force it back to its original dimensions and pass them back with the element"
-  (let [d (.getElementById js/document id)
-        w (js/parseInt (.getAttribute d "width") 10)
-        h (js/parseInt (.getAttribute d "height") 10)
-        p (js/SVG id)]
-    (.spof p)
-    (.attr p "width" w)
-    (.attr p "height" h)
-    {:svg p :width w :height h}))
-
 (defn create-hue-range [a b total]
   (let [mn (min a b)
         mx (max a b)
@@ -62,8 +59,7 @@
 
 (defn get-svg-attrs [p]
   "Use the width and height of the SVG object to calculate the x,y positions for all the circles and their radii"
-  (let [{svg :svg rwidth :width rheight :height} p
-        attr (.attr svg)
+  (let [{rwidth :width rheight :height} p
         amt 5
         total (* amt amt)
         width (- rwidth (* rwidth .1)) ; create a border offset within SVG
@@ -71,7 +67,7 @@
         xoffset (/ (* rwidth .1) 2) ; amount to offset the dots on x/y
         roffset (/ (* width .1) 12)
         cwidth (Math/floor (/ width amt)) ; circle width
-        crad (- (* cwidth .85) roffset) ; circle radius
+        crad (- (/ cwidth 2) roffset) ; circle radius
         cxs (mapv #(* cwidth %)
                   (drop 1 (take (+ 1 amt) (range)))) ; vector of x coords
         ]
@@ -92,52 +88,71 @@
   (let [hsla (clojure.string/replace "hsla(_,80%,50%,1)" #"_" (str hue))]
     @(-> hsla col/css col/as-int24 col/as-css)))
 
-(defn make-circle-zero [p triple xoff roff cr]
+(hiccups/defhtml make-svg [width height children]
+  [:svg {:id (make-id "identikon"), :height height, :width width, :version "1.1",
+         :xmlns "https://www.w3.org/2000/svg"} children])
+
+(hiccups/defhtml svg-dot [r cx cy fill]
+  [:circle {:id (make-id "iknDot"), :r r, :cx cx, :cy cy, :fill fill}])
+
+(hiccups/defhtml svg-ring [r cx cy stroke stroke-width]
+  [:circle {:id (make-id "iknDot"), :r r, :cx cx, :cy cy, :fill "#fff",
+            :stroke stroke, :stroke-width stroke-width}])
+
+(defn make-circle-zero [triple xoff roff cr]
   "Large solid circle"
   (let [[x y hue] triple
-        c (.circle p (- cr roff))
+        r (- cr roff)
+        cx (- (+ xoff x) cr)
+        cy (- (+ xoff y) cr)
         hsla (make-hsla hue)]
-    (.attr c (clj->js {:cx (- (+ xoff x) cr)
-                       :cy (- (+ xoff y) cr)
-                       :fill hsla}))))
+    (svg-dot r cx cy hsla)))
 
-(defn make-circle-one [p triple xoff roff cr]
+(defn make-circle-one [triple xoff roff cr]
   "Ring"
   (let [[x y hue] triple
-        c (.circle p (- (- cr (/ cr 4)) roff))
+        r (- (- cr (/ cr 4)) roff)
+        cx (- (+ xoff x) cr)
+        cy (- (+ xoff y) cr)
+        stroke-width (/ cr 2.5)
         hsla (make-hsla hue)]
-    (.attr c (clj->js {:cx (- (+ xoff x) cr)
-                       :cy (- (+ xoff y) cr)
-                       :fill "#fff"
-                       :stroke-width (/ cr 4)
-                       :stroke hsla}))))
+    (svg-ring r cx cy hsla stroke-width)))
 
-(defn make-circle-two [p triple xoff roff cr]
+(defn make-circle-two [triple xoff roff cr]
   "Small solid circle"
   (let [[x y hue] triple
-        c (.circle p (- (- cr (/ cr 3)) roff))
+        r (- (- cr (/ cr 3)) roff)
+        cx (- (+ xoff x) cr)
+        cy (- (+ xoff y) cr)
         hsla (make-hsla hue)]
-    (.attr c (clj->js {:cx (- (+ xoff x) cr)
-                       :cy (- (+ xoff y) cr)
-                       :fill hsla}))))
+    (svg-dot r cx cy hsla)))
 
-(defn make-identikon [p ints hues]
+(defn generate-circle [xoff roff cr dot]
+  (let [int (last dot)
+        m (mod int 3)]
+    (cond
+      (= 0 m) (make-circle-zero (take 3 dot) xoff roff cr)
+      (= 1 m) (make-circle-one (take 3 dot) xoff roff cr)
+      (= 2 m) (make-circle-two (take 3 dot) xoff roff cr))))
+
+(defn insert-svg [svg el]
+  (set! (.-innerHTML el) svg))
+
+(defn make-identikon [dimensions]
   "Determine which circle to show by converting the int to mod 3"
-  (let [svg (get-svg-attrs p)
-        {paper :svg} p
-        {coords :coords xoff :xoffset roff :roffset cr :cr} svg]
-    (doseq [x (map conj coords hues ints)]
-      (let [int (last x)
-            m (mod int 3)]
-        (cond
-          (= 0 m) (make-circle-zero paper (take 3 x) xoff roff cr)
-          (= 1 m) (make-circle-one paper (take 3 x) xoff roff cr)
-          (= 2 m) (make-circle-two paper (take 3 x) xoff roff cr))))))
+  (let [svg (get-svg-attrs dimensions)
+        {w :width, h :height, hues :hues, ints :mirror} dimensions
+        {coords :coords xoff :xoffset roff :roffset cr :cr} svg
+        dot-attrs (map conj coords hues ints)
+        dots (map (partial generate-circle xoff roff cr) dot-attrs)]
+    (make-svg w h dots)))
 
-(defn ^:export make [id s]
-  (let [paper (get-svg id)
-        ints (convert-string s)
+(defn ^:export make [el width height s]
+  (let [ints (convert-string s)
         mirror (create-mirror ints)
         [hue-start hue-end] (find-hues ints)
-        hues (create-hues (create-hue-range hue-start hue-end 25) 25)]
-    (make-identikon paper mirror hues)))
+        hues (create-hues (create-hue-range hue-start hue-end 25) 25)
+        idk (make-identikon {:mirror mirror, :hues hues, :width width,
+                             :height height})]
+    (doseq [el (prim-seq (.querySelectorAll js/document el))]
+      (insert-svg idk el))))
